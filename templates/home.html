@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- ================= HERO SECTION ================= -->
+
+<section class="bg-dark text-white py-5">
+
+    <div class="container">
+
+        <div class="row align-items-center">
+
+            <div class="col-lg-6">
+
+                <h1 class="display-3 fw-bold">
+
+                    Smart Parking
+                    <span class="text-success">
+                        for Smarter Cities
+                    </span>
+
+                </h1>
+
+                <p class="lead mt-4">
+
+                    ParkSense Rwanda is an intelligent parking management
+                    platform that helps drivers quickly locate available
+                    parking spaces while reducing traffic congestion,
+                    fuel consumption and parking time.
+
+                </p>
+
+                <div class="mt-4">
+
+                    <a href="{{ url_for('dashboard') }}"
+                       class="btn btn-success btn-lg me-3">
+
+                        Launch Simulation
+
+                    </a>
+
+                    <a href="{{ url_for('about') }}"
+                       class="btn btn-outline-light btn-lg">
+
+                        Learn More
+
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-6 text-center">
+
+                <!-- ========================================= -->
+                <!-- PUT A HERO IMAGE HERE LATER               -->
+                <!-- Example: Parking illustration or mockup   -->
+                <!-- ========================================= -->
+
+                <img src="{{ url_for('static', filename='images/team.jpg') }}"
+                     class="img-fluid rounded shadow"
+                     alt="Smart Parking">
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ================= PROBLEM ================= -->
+
+<section class="py-5">
+
+    <div class="container">
+
+        <div class="text-center mb-5">
+
+            <h2 class="fw-bold">
+
+                The Problem
+
+            </h2>
+
+            <p class="text-muted">
+
+                Finding parking in busy urban areas wastes time,
+                increases fuel consumption,
+                and contributes to unnecessary traffic congestion.
+
+            </p>
+
+        </div>
+
+        <div class="row text-center">
+
+            <div class="col-md-4">
+
+                <i class="bi bi-clock-history display-4 text-success"></i>
+
+                <h4 class="mt-3">
+
+                    Save Time
+
+                </h4>
+
+                <p>
+
+                    Drivers are guided directly to available parking spaces.
+
+                </p>
+
+            </div>
+
+            <div class="col-md-4">
+
+                <i class="bi bi-fuel-pump display-4 text-success"></i>
+
+                <h4 class="mt-3">
+
+                    Reduce Fuel Usage
+
+                </h4>
+
+                <p>
+
+                    Less driving around means lower fuel costs.
+
+                </p>
+
+            </div>
+
+            <div class="col-md-4">
+
+                <i class="bi bi-tree display-4 text-success"></i>
+
+                <h4 class="mt-3">
+
+                    Cleaner Environment
+
+                </h4>
+
+                <p>
+
+                    Fewer emissions improve air quality and urban mobility.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ================= FEATURES ================= -->
+
+<section class="bg-light py-5">
+
+    <div class="container">
+
+        <div class="text-center mb-5">
+
+            <h2 class="fw-bold">
+
+                Key Features
+
+            </h2>
+
+        </div>
+
+        <div class="row g-4">
+
+            <div class="col-md-3">
+
+                <div class="card h-100 shadow-sm">
+
+                    <div class="card-body text-center">
+
+                        <i class="bi bi-radar display-5 text-success"></i>
+
+                        <h5 class="mt-3">
+
+                            Sensor Detection
+
+                        </h5>
+
+                        <p>
+
+                            Detects vehicle occupancy automatically.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-3">
+
+                <div class="card h-100 shadow-sm">
+
+                    <div class="card-body text-center">
+
+                        <i class="bi bi-sign-turn-right display-5 text-success"></i>
+
+                        <h5 class="mt-3">
+
+                            Smart Guidance
+
+                        </h5>
+
+                        <p>
+
+                            Assigns the nearest available parking space.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-3">
+
+                <div class="card h-100 shadow-sm">
+
+                    <div class="card-body text-center">
+
+                        <i class="bi bi-currency-dollar display-5 text-success"></i>
+
+                        <h5 class="mt-3">
+
+                            Automatic Billing
+
+                        </h5>
+
+                        <p>
+
+                            Calculates parking fees automatically.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-3">
+
+                <div class="card h-100 shadow-sm">
+
+                    <div class="card-body text-center">
+
+                        <i class="bi bi-graph-up-arrow display-5 text-success"></i>
+
+                        <h5 class="mt-3">
+
+                            Live Monitoring
+
+                        </h5>
+
+                        <p>
+
+                            View parking activity in real time.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ================= SIMULATION SECTION ================= -->
+
+<section class="py-5">
+
+    <div class="container">
+
+        <div class="text-center mb-5">
+
+            <h2 class="fw-bold">
+
+                Live Smart Parking Simulation
+
+            </h2>
+
+            <p class="text-muted">
+
+                Experience how ParkSense Rwanda manages vehicles,
+                parking spaces and automated billing.
+
+            </p>
+
+        </div>
+
+        <!-- ==================================================== -->
+        <!--                                                       -->
+        <!--            PASTE YOUR THREE.JS SIMULATION             -->
+        <!--                 INSIDE THIS DIV                       -->
+        <!--                                                       -->
+        <!-- ==================================================== -->
+
+        <div class="simulation-container shadow rounded overflow-hidden">
+
+            <!-- PUT YOUR SIMULATION HERE -->
+
+
+
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ================= CALL TO ACTION ================= -->
+
+<section class="bg-success text-white py-5">
+
+    <div class="container text-center">
+
+        <h2 class="fw-bold">
+
+            Ready to Experience Smart Parking?
+
+        </h2>
+
+        <p class="lead mt-3">
+
+            Explore the intelligent parking system
+            designed to make cities smarter and transportation easier.
+
+        </p>
+
+        <a href="{{ url_for('dashboard') }}"
+           class="btn btn-light btn-lg mt-3">
+
+            Launch Simulation
+
+        </a>
+
+    </div>
+
+</section>
+
+{% endblock %}

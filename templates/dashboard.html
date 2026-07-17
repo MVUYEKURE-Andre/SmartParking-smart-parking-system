@@ -1,0 +1,1056 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Kigali Smart Park — 3D Simulation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+          rel="stylesheet"/>
+    <style>
+        :root {
+            --bg: #0B0D10;
+            --panel: #14181F;
+            --border: #262B33;
+            --line: #8B93A1;
+            --free: #1A1E24;
+            --pending: #F5B833;
+            --occupied: #E5484D;
+            --paid: #60A5FA;
+            --saved: #34D399;
+            --text: #EDEBE4;
+            --sub: #8B93A1;
+            --led: #FFB020;
+            --display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+            --mono: 'IBM Plex Mono', ui-monospace, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            height: 100%;
+            background: var(--bg);
+            overflow: hidden;
+            font-family: var(--display);
+            color: var(--text);
+        }
+
+        #scene {
+            position: fixed;
+            inset: 0;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* --- HUD --- */
+        .hud {
+            position: fixed;
+            pointer-events: none;
+        }
+
+        #topLeft {
+            top: 18px;
+            left: 20px;
+        }
+
+        #eyebrow {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: .24em;
+            text-transform: uppercase;
+            color: var(--sub);
+            margin-bottom: 2px;
+        }
+
+        #title {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -.01em;
+        }
+
+        #sizeControls {
+            top: 76px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            pointer-events: auto;
+        }
+
+        #sizeLabel {
+            font-family: var(--mono);
+            font-size: 9.5px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--sub);
+            margin-right: 2px;
+        }
+
+        .size-btn {
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 6px 11px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(20, 24, 31, .82);
+            color: var(--sub);
+            cursor: pointer;
+            backdrop-filter: blur(6px);
+            transition: all .15s;
+        }
+
+        .size-btn:hover {
+            color: var(--text);
+        }
+
+        .size-btn.active {
+            color: var(--text);
+            border-color: var(--paid);
+            background: rgba(96, 165, 250, .14);
+        }
+
+        #trafficControls {
+            top: 118px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            pointer-events: auto;
+        }
+
+        #trafficLabel {
+            font-family: var(--mono);
+            font-size: 9.5px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--sub);
+            margin-right: 2px;
+        }
+
+        .traffic-btn {
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 6px 11px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(20, 24, 31, .82);
+            color: var(--sub);
+            cursor: pointer;
+            backdrop-filter: blur(6px);
+            transition: all .15s;
+        }
+
+        .traffic-btn:hover {
+            color: var(--text);
+        }
+
+        .traffic-btn.active {
+            color: var(--text);
+            border-color: var(--pending);
+            background: rgba(245, 184, 51, .14);
+        }
+
+        #quick {
+            background: var(--saved);
+            color: #00251A;
+            border-color: var(--saved);
+        }
+
+        #stats {
+            top: 18px;
+            right: 20px;
+            display: grid;
+            grid-template-columns:1fr 1fr;
+            gap: 8px;
+            width: 270px;
+        }
+
+        .stat {
+            background: rgba(20, 24, 31, .82);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 9px 11px;
+            backdrop-filter: blur(6px);
+        }
+
+        .stat .k {
+            font-family: var(--mono);
+            font-size: 9.5px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--sub);
+        }
+
+        .stat .v {
+            font-family: var(--mono);
+            font-size: 19px;
+            font-weight: 500;
+            margin-top: 1px;
+        }
+
+        #log {
+            bottom: 76px;
+            right: 20px;
+            width: 270px;
+            max-height: 34vh;
+            background: rgba(20, 24, 31, .82);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 11px 13px;
+            overflow-y: auto;
+            backdrop-filter: blur(6px);
+            pointer-events: auto;
+        }
+
+        #log h3 {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            color: var(--sub);
+            margin: 0 0 8px;
+        }
+
+        .row {
+            font-family: var(--mono);
+            font-size: 11px;
+            line-height: 1.5;
+            margin-bottom: 3px;
+        }
+
+        .row .t {
+            color: var(--sub);
+        }
+
+        #controls {
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            pointer-events: auto;
+        }
+
+        button {
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 13px;
+            border-radius: 10px;
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: opacity .15s, background .15s;
+        }
+
+        button:hover {
+            opacity: .88;
+        }
+
+        #arrive {
+            background: var(--pending);
+            color: #1A1200;
+            border-color: var(--pending);
+        }
+
+        #auto.on {
+            background: var(--occupied);
+            color: #fff;
+            border-color: var(--occupied);
+        }
+
+        #reset:active {
+            transform: scale(0.97);
+        }
+
+        .hint {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--mono);
+            font-size: 10.5px;
+            color: var(--sub);
+            letter-spacing: .06em;
+            pointer-events: none;
+            opacity: .7;
+        }
+
+        #log::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #log::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        @media (max-width: 640px) {
+            #stats {
+                width: 190px;
+                grid-template-columns:1fr;
+            }
+
+            #log {
+                width: 190px;
+                max-height: 26vh;
+            }
+
+            #title {
+                font-size: 20px;
+            }
+
+            #sizeControls {
+                flex-wrap: wrap;
+                width: 190px;
+                top: 80px;
+            }
+
+            #trafficControls {
+                flex-wrap: wrap;
+                width: 190px;
+                top: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="scene"></div>
+
+<div class="hud" id="topLeft">
+    <div id="eyebrow">Live 3D Simulation</div>
+    <div id="title">Kigali Smart Park</div>
+</div>
+
+<div class="hud" id="sizeControls">
+    <span id="sizeLabel">Lot size</span>
+    <button class="size-btn" data-zones="2">12</button>
+    <button class="size-btn" data-zones="4">24</button>
+    <button class="size-btn" data-zones="6">36</button>
+</div>
+
+<div class="hud" id="trafficControls">
+    <span id="trafficLabel">Traffic</span>
+    <button class="traffic-btn" data-level="calm">Calm</button>
+    <button class="traffic-btn" data-level="busy">Busy</button>
+    <button class="traffic-btn" data-level="rush">Rush</button>
+</div>
+
+<div class="hud" id="stats">
+    <div class="stat">
+        <div class="k">Occupancy</div>
+        <div class="v" id="s-occ">0/12</div>
+    </div>
+    <div class="stat">
+        <div class="k">Revenue · RWF</div>
+        <div class="v" id="s-rev" style="color:var(--pending)">0</div>
+    </div>
+    <div class="stat">
+        <div class="k">Paid visits</div>
+        <div class="v" id="s-paid" style="color:var(--paid)">0</div>
+    </div>
+    <div class="stat">
+        <div class="k">Fair-billing saves</div>
+        <div class="v" id="s-saved" style="color:var(--saved)">0</div>
+    </div>
+    <div class="stat">
+        <div class="k">Turned away</div>
+        <div class="v" id="s-away" style="color:var(--occupied)">0</div>
+    </div>
+</div>
+
+<div class="hud" id="log"><h3>Event Log</h3>
+    <div id="log-rows"></div>
+</div>
+
+<div id="controls">
+    <button id="quick">▶ Run Simulation</button>
+    <button id="auto">⏸ Pause</button>
+    <button id="arrive">＋ New Arrival</button>
+    <button id="reset">■ End / Reset</button>
+    <button id="cam">⤢ Reset View</button>
+</div>
+<div class="hint">drag to orbit · scroll to zoom · click a parked car to make it leave</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    // ---------- palette (from the app) ----------
+    const C = {
+        bg: 0x0B0D10, ground: 0x0E1116, asphalt: 0x12161C, line: 0x2A313B,
+        free: 0x1A1E24, pending: 0xF5B833, occupied: 0xE5484D,
+        led: 0xFFB020, panel: 0x14181F, border: 0x262B33
+    };
+    const RATE_PER_SEC = 20;              // RWF/sec — matches the app
+    const PARK_PROBABILITY = 0.82;        // matches the app: ~18% never reach their slot
+    const CAR_COLORS = [0x34D399, 0x60A5FA, 0xF5B833, 0xE5484D, 0xEDEBE4, 0xA78BFA, 0xF97316];
+
+    // ---------- three.js scene ----------
+    const host = document.getElementById('scene');
+    const renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    host.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(C.bg);
+    scene.fog = new THREE.Fog(C.bg, 34, 95);
+
+    const camera = new THREE.PerspectiveCamera(46, innerWidth / innerHeight, 0.1, 220);
+
+    // lights
+    scene.add(new THREE.AmbientLight(0x8090a8, 0.55));
+    const key = new THREE.DirectionalLight(0xffffff, 1.15);
+    key.position.set(-14, 22, 12);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.camera.left = -30;
+    key.shadow.camera.right = 30;
+    key.shadow.camera.top = 30;
+    key.shadow.camera.bottom = -30;
+    key.shadow.camera.near = 1;
+    key.shadow.camera.far = 70;
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0xFFB020, 0.25);
+    rim.position.set(10, 8, -14);
+    scene.add(rim);
+
+    // ground — sized generously so it comfortably fits the largest lot preset (36 spaces)
+    const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(64, 66),
+        new THREE.MeshStandardMaterial({color: C.asphalt, roughness: .95, metalness: 0})
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.02;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // central aisle stripe
+    const aisle = new THREE.Mesh(
+        new THREE.PlaneGeometry(34, 56),
+        new THREE.MeshStandardMaterial({color: 0x0E1116, roughness: 1})
+    );
+    aisle.rotation.x = -Math.PI / 2;
+    aisle.rotation.z = Math.PI / 2;
+    aisle.position.set(0, 0.001, 0);
+    scene.add(aisle);
+
+    // ---------- slot layout (dynamic capacity) ----------
+    const XS = [-7, -4.2, -1.4, 1.4, 4.2, 7];       // 6 slot x positions per row (fixed)
+    const ROW_GAP = 9.2;
+    const NOSE = 0.65;                          // how far a parked car noses into slot
+
+    let slots = [];          // {id,zone,x,z,status,pad,parkedAt,plate}
+    let zonesCount = 2;
+    let slotMeshes = [];     // pads + edge outlines, rebuilt per capacity change
+    let zoneLabelMeshes = [];
+
+    const padGeo = new THREE.BoxGeometry(2.5, 0.08, 3.7);
+    const edgeSrc = new THREE.EdgesGeometry(new THREE.PlaneGeometry(2.5, 3.7));
+
+    function textPlane(txt, w, h, px) {
+        const cv = document.createElement('canvas');
+        cv.width = 512;
+        cv.height = 256;
+        const g = cv.getContext('2d');
+        g.fillStyle = 'rgba(139,147,161,0.55)';
+        g.font = `bold ${px}px 'IBM Plex Mono',monospace`;
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        g.fillText(txt, 256, 128);
+        const tex = new THREE.CanvasTexture(cv);
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+            new THREE.MeshBasicMaterial({map: tex, transparent: true}));
+        m.rotation.x = -Math.PI / 2;
+        return m;
+    }
+
+    function buildLot(nZones) {
+        // tear down previous slot meshes + labels
+        slotMeshes.forEach(m => scene.remove(m));
+        zoneLabelMeshes.forEach(m => scene.remove(m));
+        slotMeshes = [];
+        zoneLabelMeshes = [];
+        slots = [];
+        zonesCount = nZones;
+
+        for (let zi = 0; zi < nZones; zi++) {
+            const zoneLetter = String.fromCharCode(65 + zi);
+            const z = (zi - (nZones - 1) / 2) * ROW_GAP;
+
+            XS.forEach((x, i) => {
+                const pad = new THREE.Mesh(padGeo, new THREE.MeshStandardMaterial({
+                    color: C.free, emissive: C.free, emissiveIntensity: .15, roughness: .7
+                }));
+                pad.position.set(x, 0.02, z);
+                pad.receiveShadow = true;
+                scene.add(pad);
+                const edges = new THREE.LineSegments(edgeSrc,
+                    new THREE.LineBasicMaterial({color: 0x3A424E}));
+                edges.rotation.x = -Math.PI / 2;
+                edges.position.set(x, 0.09, z);
+                scene.add(edges);
+                slotMeshes.push(pad, edges);
+                slots.push({
+                    id: zoneLetter + (i + 1),
+                    zone: zoneLetter,
+                    x,
+                    z,
+                    status: 'free',
+                    pad,
+                    parkedAt: 0,
+                    plate: null
+                });
+            });
+
+            const lbl = textPlane('ZONE ' + zoneLetter, 5, 2.5, 120);
+            lbl.position.set(-11, 0.03, z);
+            scene.add(lbl);
+            zoneLabelMeshes.push(lbl);
+        }
+    }
+
+    // ---------- entrance gate (fixed, independent of capacity) ----------
+    const postGeo = new THREE.BoxGeometry(0.5, 2.2, 0.5);
+    const postMat = new THREE.MeshStandardMaterial({color: 0x2A313B, roughness: .6});
+    [-1.7, 1.7].forEach(pz => {
+        const p = new THREE.Mesh(postGeo, postMat);
+        p.position.set(-11, 1.1, pz);
+        p.castShadow = true;
+        scene.add(p);
+    });
+    // gate light (green available / red full)
+    const gateLight = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16),
+        new THREE.MeshStandardMaterial({color: 0x34D399, emissive: 0x34D399, emissiveIntensity: 1}));
+    gateLight.position.set(-11, 2.5, -1.7);
+    scene.add(gateLight);
+
+    // barrier arm (pivots up to open)
+    const gate = new THREE.Group();
+    gate.position.set(-11, 1.4, -1.7);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 3.4),
+        new THREE.MeshStandardMaterial({color: 0xF5B833, emissive: 0xF5B833, emissiveIntensity: .25, roughness: .5}));
+    arm.position.z = 1.7;
+    arm.castShadow = true;
+    gate.add(arm);
+    scene.add(gate);
+    let gateTarget = 0;                 // 0 closed (down) → -PI/2 open (up)
+
+    // ---------- LED availability board (signature element) ----------
+    const boardCv = document.createElement('canvas');
+    boardCv.width = 1024;
+    boardCv.height = 512;
+    const bctx = boardCv.getContext('2d');
+    const boardTex = new THREE.CanvasTexture(boardCv);
+
+    function drawBoard() {
+        bctx.fillStyle = '#05070A';
+        bctx.fillRect(0, 0, 1024, 512);
+        bctx.strokeStyle = '#2A2E22';
+        bctx.lineWidth = 16;
+        bctx.strokeRect(8, 8, 1008, 496);
+        const free = slots.filter(s => s.status === 'free').length;
+        const total = slots.length;
+        const full = free === 0;
+        bctx.textAlign = 'center';
+        bctx.shadowColor = '#FFB020';
+        bctx.shadowBlur = 28;
+        bctx.fillStyle = '#FFB020';
+        bctx.font = "500 90px 'IBM Plex Mono',monospace";
+        bctx.fillText(full ? 'LOT FULL' : 'SPACES FREE', 512, 150);
+        if (!full) {
+            bctx.font = "700 210px 'IBM Plex Mono',monospace";
+            bctx.fillText(free + ' / ' + total, 512, 360);
+        } else {
+            bctx.font = "700 150px 'IBM Plex Mono',monospace";
+            bctx.fillText('~15 MIN', 512, 350);
+        }
+        bctx.shadowBlur = 0;
+        boardTex.needsUpdate = true;
+    }
+
+    const boardPanel = new THREE.Mesh(new THREE.BoxGeometry(9, 4.5, 0.3),
+        new THREE.MeshStandardMaterial({color: 0x05070A}));
+    const boardFace = new THREE.Mesh(new THREE.PlaneGeometry(8.4, 4.2),
+        new THREE.MeshBasicMaterial({map: boardTex}));
+    boardFace.position.z = 0.16;
+    const board = new THREE.Group();
+    board.add(boardPanel);
+    board.add(boardFace);
+    board.position.set(0, 4.4, -11);
+    scene.add(board);
+    [-3.5, 3.5].forEach(px => {
+        const pole = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.6, 0.3), postMat);
+        pole.position.set(px, 2.2, -11);
+        pole.castShadow = true;
+        scene.add(pole);
+    });
+
+    // ---------- cars ----------
+    function makeCar(color) {
+        const g = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.55, 0.95),
+            new THREE.MeshStandardMaterial({color, roughness: .35, metalness: .25}));
+        body.position.y = 0.45;
+        body.castShadow = true;
+        g.add(body);
+        const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 0.8),
+            new THREE.MeshStandardMaterial({color, roughness: .2, metalness: .3}));
+        cabin.position.set(-0.1, 0.9, 0);
+        cabin.castShadow = true;
+        g.add(cabin);
+        const wheelGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.18, 14);
+        const wheelMat = new THREE.MeshStandardMaterial({color: 0x0A0C0F, roughness: .9});
+        [[-0.6, -0.5], [0.6, -0.5], [-0.6, 0.5], [0.6, 0.5]].forEach(([wx, wz]) => {
+            const w = new THREE.Mesh(wheelGeo, wheelMat);
+            w.rotation.x = Math.PI / 2;
+            w.position.set(wx, 0.25, wz);
+            g.add(w);
+        });
+        return g;
+    }
+
+    const SPAWN = {x: -15, z: 0}, GATE = {x: -11, z: 0}, LANE_Y = 0;
+    const SPEED = 6.5;
+    let cars = [];  // {mesh,slot,mode:'in'|'out',willPark,wp:[],i:0}
+
+    function facing(mesh, from, to) {
+        mesh.rotation.y = Math.atan2(to.z - from.z, to.x - from.x);
+    }
+
+    // ---------- stats & log ----------
+    let stats = {revenue: 0, paid: 0, away: 0, freeVisits: 0};
+    const logRows = document.getElementById('log-rows');
+    const LOG_COLOR = {
+        assign: '#F5B833',
+        park: '#E5484D',
+        exit: '#60A5FA',
+        leave: '#34D399',
+        warn: '#FB923C',
+        info: '#8B93A1'
+    };
+
+    function pushLog(text, type = 'info') {
+        const t = new Date().toLocaleTimeString([], {hour12: false});
+        const div = document.createElement('div');
+        div.className = 'row';
+        div.innerHTML = `<span class="t">${t}</span> <span style="color:${LOG_COLOR[type] || '#EDEBE4'}">${text}</span>`;
+        logRows.prepend(div);
+        while (logRows.children.length > 40) logRows.removeChild(logRows.lastChild);
+    }
+
+    function randomPlate() {
+        const L = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const l = () => L[Math.floor(Math.random() * L.length)];
+        return `RA${Math.floor(Math.random() * 900 + 100)}${l()}`;
+    }
+
+    function refreshHUD() {
+        const occ = slots.filter(s => s.status === 'occupied').length;
+        document.getElementById('s-occ').textContent = occ + '/' + slots.length;
+        document.getElementById('s-rev').textContent = stats.revenue.toLocaleString();
+        document.getElementById('s-paid').textContent = stats.paid;
+        document.getElementById('s-saved').textContent = stats.freeVisits;
+        document.getElementById('s-away').textContent = stats.away;
+    }
+
+    function setSlotColor(slot) {
+        const c = slot.status === 'pending' ? C.pending : slot.status === 'occupied' ? C.occupied : C.free;
+        slot.pad.material.color.setHex(c);
+        slot.pad.material.emissive.setHex(c);
+        slot.pad.material.emissiveIntensity = slot.status === 'free' ? 0.15 : 0.7;
+    }
+
+    // ---------- core behaviour (mirrors the app, including the fairness outcome) ----------
+    function arrival() {
+        const free = slots.filter(s => s.status === 'free');
+        if (free.length === 0) {
+            stats.away++;
+            pushLog('Car turned away — lot FULL, ~15 min wait', 'warn');
+            gateLight.material.color.setHex(0xE5484D);
+            gateLight.material.emissive.setHex(0xE5484D);
+            refreshHUD();
+            drawBoard();
+            return;
+        }
+        const slot = free[Math.floor(Math.random() * free.length)];
+        const plate = randomPlate();
+        slot.plate = plate;
+        slot.status = 'pending';
+        setSlotColor(slot);
+        drawBoard();
+        pushLog(`${plate} scanned at entry — assigned ${slot.id}`, 'assign');
+
+        const willPark = Math.random() < PARK_PROBABILITY;
+        const mesh = makeCar(CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)]);
+        mesh.position.set(SPAWN.x, 0, SPAWN.z);
+        scene.add(mesh);
+
+        // parking cars drive all the way into the slot; non-parking cars only reach
+        // the row (never register at the slot) before turning back — matches the
+        // "never reached slot, no charge" rule from the proposal.
+        const wp = willPark
+            ? [{x: GATE.x, z: LANE_Y}, {x: slot.x, z: LANE_Y}, {x: slot.x, z: slot.z * NOSE}]
+            : [{x: GATE.x, z: LANE_Y}, {x: slot.x, z: LANE_Y}];
+
+        cars.push({mesh, slot, mode: 'in', willPark, wp, i: 0});
+    }
+
+    function departure(slot) {
+        if (slot.status !== 'occupied') return;
+        const car = cars.find(c => c.slot === slot && c.mode === 'parked');
+        slot.status = 'free-exiting';
+        const wp = [{x: slot.x, z: LANE_Y}, {x: GATE.x, z: LANE_Y}, {x: SPAWN.x, z: LANE_Y}];
+        if (car) {
+            car.mode = 'out';
+            car.wp = wp;
+            car.i = 0;
+        }
+        const secs = Math.max(1, Math.round((performance.now() - slot.parkedAt) / 1000));
+        const fee = secs * RATE_PER_SEC;
+        stats.revenue += fee;
+        stats.paid++;
+        pushLog(`${slot.plate} exited ${slot.id} — fee ${fee.toLocaleString()} RWF`, 'exit');
+        refreshHUD();
+    }
+
+    // ---------- animation ----------
+    const clock = new THREE.Clock();
+
+    function updateCars(dt) {
+        let carNearGate = false;
+        for (let k = cars.length - 1; k >= 0; k--) {
+            const car = cars[k];
+            if (car.mode === 'parked') continue;
+            const tgt = car.wp[car.i];
+            const p = car.mesh.position;
+            const dx = tgt.x - p.x, dz = tgt.z - p.z, dist = Math.hypot(dx, dz);
+            if (p.x < -8) carNearGate = true;
+            if (dist < 0.12) {
+                car.i++;
+                if (car.i >= car.wp.length) {
+                    if (car.mode === 'in' && car.willPark) {
+                        car.mode = 'parked';
+                        const s = car.slot;
+                        s.status = 'occupied';
+                        s.parkedAt = performance.now();
+                        setSlotColor(s);
+                        drawBoard();
+                        pushLog(`${s.plate} parked in ${s.id} — billing started`, 'park');
+                        refreshHUD();
+                    } else if (car.mode === 'in' && !car.willPark) {
+                        // reached the row but never registered at the slot — no charge
+                        const s = car.slot;
+                        const plate = s.plate;
+                        s.status = 'free';
+                        s.plate = null;
+                        setSlotColor(s);
+                        drawBoard();
+                        pushLog(`${plate} left without parking (assigned ${s.id}) — no charge`, 'leave');
+                        stats.freeVisits++;
+                        refreshHUD();
+                        car.mode = 'out';
+                        car.wp = [{x: GATE.x, z: LANE_Y}, {x: SPAWN.x, z: LANE_Y}];
+                        car.i = 0;
+                    } else { // out — car has fully left the lot; finalize the slot as free
+                        scene.remove(car.mesh);
+                        cars.splice(k, 1);
+                        const s = car.slot;
+                        if (s && s.status !== 'free') {
+                            s.status = 'free';
+                            s.plate = null;
+                            setSlotColor(s);
+                            drawBoard();
+                            refreshHUD();
+                        }
+                    }
+                }
+            } else {
+                const step = Math.min(SPEED * dt, dist);
+                p.x += dx / dist * step;
+                p.z += dz / dist * step;
+                facing(car.mesh, {x: p.x - dx, z: p.z - dz}, tgt);
+            }
+        }
+        gateTarget = carNearGate ? -Math.PI / 2 : 0;
+        gate.rotation.x += (gateTarget - gate.rotation.x) * Math.min(1, dt * 6);
+        if (slots.some(s => s.status === 'free')) {
+            gateLight.material.color.setHex(0x34D399);
+            gateLight.material.emissive.setHex(0x34D399);
+        }
+    }
+
+    // ---------- orbit camera ----------
+    const cam = {theta: -0.55, phi: 0.92, r: 30, tx: 0, tz: 0};
+
+    function defaultCamFor(n) {
+        return {theta: -0.55, phi: 0.92, r: 30 + (n - 2) * 6, tx: 0, tz: 0};
+    }
+
+    function applyCam() {
+        camera.position.set(
+            cam.tx + cam.r * Math.sin(cam.phi) * Math.cos(cam.theta),
+            cam.r * Math.cos(cam.phi),
+            cam.tz + cam.r * Math.sin(cam.phi) * Math.sin(cam.theta)
+        );
+        camera.lookAt(cam.tx, 0.5, cam.tz);
+    }
+
+    applyCam();
+    let drag = false, lx = 0, ly = 0;
+    renderer.domElement.addEventListener('pointerdown', e => {
+        drag = true;
+        lx = e.clientX;
+        ly = e.clientY;
+    });
+    addEventListener('pointerup', () => drag = false);
+    addEventListener('pointermove', e => {
+        if (!drag) return;
+        cam.theta += (e.clientX - lx) * 0.006;
+        cam.phi = Math.max(0.25, Math.min(1.35, cam.phi + (e.clientY - ly) * 0.005));
+        lx = e.clientX;
+        ly = e.clientY;
+        applyCam();
+    });
+    renderer.domElement.addEventListener('wheel', e => {
+        e.preventDefault();
+        cam.r = Math.max(16, Math.min(70, cam.r + e.deltaY * 0.02));
+        applyCam();
+    }, {passive: false});
+
+    // ---------- traffic intensity (controls how fast cars enter during autoplay) ----------
+    const TRAFFIC = {
+        calm: {interval: 2600, arrivalChance: 0.50, burst: 1},
+        busy: {interval: 1600, arrivalChance: 0.62, burst: 1},
+        rush: {interval: 900, arrivalChance: 0.72, burst: 2}   // rush hour: can spawn 2 cars per tick
+    };
+    let trafficLevel = 'busy';
+
+    // ---------- controls ----------
+    const autoBtn = document.getElementById('auto');
+    let autoplay = false, autoTimer = null;
+
+    function stopAutoplay() {
+        autoplay = false;
+        if (autoTimer) {
+            clearInterval(autoTimer);
+            autoTimer = null;
+        }
+        autoBtn.classList.remove('on');
+        autoBtn.innerHTML = '▶ Resume';
+    }
+
+    function startAutoplay() {
+        autoplay = true;
+        autoBtn.classList.add('on');
+        autoBtn.innerHTML = '⏸ Pause';
+        if (autoTimer) clearInterval(autoTimer);
+        const t = TRAFFIC[trafficLevel];
+        autoTimer = setInterval(() => {
+            for (let b = 0; b < t.burst; b++) {
+                const free = slots.filter(s => s.status === 'free').length;
+                const occ = slots.filter(s => s.status === 'occupied');
+                const r = Math.random();
+                if (free > 0 && r < t.arrivalChance) arrival();
+                else if (occ.length > 0) departure(occ[Math.floor(Math.random() * occ.length)]);
+                else if (free > 0) arrival();
+            }
+        }, t.interval);
+    }
+
+    document.getElementById('arrive').onclick = arrival;
+    document.getElementById('cam').onclick = () => {
+        const dc = defaultCamFor(zonesCount);
+        cam.theta = dc.theta;
+        cam.phi = dc.phi;
+        cam.r = dc.r;
+        applyCam();
+    };
+    autoBtn.onclick = function () {
+        autoplay ? stopAutoplay() : startAutoplay();
+    };
+
+    // traffic intensity buttons — switching level while autoplay is running
+    // restarts the timer immediately at the new pace, so a presenter can dial
+    // it up live without needing to stop and restart anything.
+    const trafficButtons = [...document.querySelectorAll('.traffic-btn')];
+    trafficButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            trafficLevel = btn.dataset.level;
+            trafficButtons.forEach(b => b.classList.toggle('active', b === btn));
+            if (autoplay) startAutoplay();
+        });
+    });
+
+    // Full, reliable reset: stops autoplay, clears every car, zeroes stats,
+    // closes the gate, restores the camera — a single source of truth so the
+    // button always leaves the scene in the same known-empty state.
+    function resetAll() {
+        stopAutoplay();
+        cars.forEach(c => scene.remove(c.mesh));
+        cars = [];
+        slots.forEach(s => {
+            s.status = 'free';
+            s.plate = null;
+            s.parkedAt = 0;
+            setSlotColor(s);
+        });
+        stats = {revenue: 0, paid: 0, away: 0, freeVisits: 0};
+        logRows.innerHTML = '';
+        pushLog('System reset — lot is empty', 'info');
+        gate.rotation.x = 0;
+        gateTarget = 0;
+        gateLight.material.color.setHex(0x34D399);
+        gateLight.material.emissive.setHex(0x34D399);
+        const dc = defaultCamFor(zonesCount);
+        cam.theta = dc.theta;
+        cam.phi = dc.phi;
+        cam.r = dc.r;
+        cam.tx = 0;
+        cam.tz = 0;
+        applyCam();
+        drawBoard();
+        refreshHUD();
+    }
+
+    document.getElementById('reset').onclick = resetAll;
+
+    // ---------- Quick Demo: instantly seeds a realistic morning of traffic ----------
+    // Runs a batch of arrival/departure outcomes directly against the data model
+    // (no drive-in animation for each one — that would take minutes to watch),
+    // so Revenue, Paid visits, Fair-billing saves and Turned away are all
+    // populated with real numbers the moment it's clicked. A few slots are left
+    // genuinely occupied (with live, ticking fees) and get real 3D cars parked
+    // in them, then autoplay kicks in so the lot keeps evolving in front of
+    // judges without any further clicks.
+    function historyTick() {
+        const free = slots.filter(s => s.status === 'free');
+        const occ = slots.filter(s => s.status === 'occupied');
+        const r = Math.random();
+        if (free.length > 0 && r < 0.62) {
+            const willPark = Math.random() < PARK_PROBABILITY;
+            if (!willPark) {
+                stats.freeVisits++;
+                return;
+            }
+            const slot = free[Math.floor(Math.random() * free.length)];
+            slot.plate = randomPlate();
+            if (Math.random() < 0.55) {
+                // this visit already completed earlier — count the fee, leave it free
+                const durationSec = 30 + Math.random() * 500;
+                stats.revenue += Math.round(durationSec) * RATE_PER_SEC;
+                stats.paid++;
+                slot.plate = null;
+            } else {
+                // still parked right now — backdate parkedAt so its fee is already ticking
+                slot.status = 'occupied';
+                slot.parkedAt = performance.now() - (5000 + Math.random() * 45000);
+                setSlotColor(slot);
+            }
+        } else if (occ.length > 0) {
+            const slot = occ[Math.floor(Math.random() * occ.length)];
+            const secs = Math.max(1, Math.round((performance.now() - slot.parkedAt) / 1000));
+            stats.revenue += secs * RATE_PER_SEC;
+            stats.paid++;
+            slot.status = 'free';
+            slot.plate = null;
+            setSlotColor(slot);
+        } else {
+            stats.away++;
+        }
+    }
+
+    function quickDemo() {
+        resetAll();
+        const ticks = Math.max(16, Math.round(slots.length * 1.8));
+        for (let i = 0; i < ticks; i++) historyTick();
+
+        // give every slot that's genuinely occupied a real, visible car
+        slots.forEach(s => {
+            if (s.status === 'occupied') {
+                const mesh = makeCar(CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)]);
+                mesh.position.set(s.x, 0, s.z * NOSE);
+                facing(mesh, {x: s.x - 1, z: 0}, {x: s.x, z: s.z});
+                scene.add(mesh);
+                cars.push({mesh, slot: s, mode: 'parked', willPark: true, wp: [], i: 0});
+            }
+        });
+
+        pushLog('Quick demo — seeded a morning of traffic', 'info');
+        drawBoard();
+        refreshHUD();
+        startAutoplay();
+    }
+
+    document.getElementById('quick').onclick = quickDemo;
+
+    // lot-size presets — switching size now restarts the simulation on the new
+    // lot immediately (this used to call resetAll(), which left the new lot
+    // empty and stopped with nothing running — that was the bug: only the
+    // 12-space default ever came alive, because only page load called
+    // quickDemo()).
+    const sizeButtons = [...document.querySelectorAll('.size-btn')];
+    sizeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const n = parseInt(btn.dataset.zones, 10);
+            buildLot(n);
+            sizeButtons.forEach(b => b.classList.toggle('active', b === btn));
+            quickDemo();
+        });
+    });
+
+    // click a parked car to make it leave
+    renderer.domElement.addEventListener('click', e => {
+        if (Math.abs(e.clientX - lx) > 4) return; // ignore drags
+        const ray = new THREE.Raycaster();
+        const m = new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+        ray.setFromCamera(m, camera);
+        for (const car of cars) {
+            if (car.mode !== 'parked') continue;
+            if (ray.intersectObject(car.mesh, true).length) {
+                departure(car.slot);
+                break;
+            }
+        }
+    });
+
+    // ---------- loop ----------
+    function frame() {
+        const dt = Math.min(0.05, clock.getDelta());
+        updateCars(dt);
+        renderer.render(scene, camera);
+        requestAnimationFrame(frame);
+    }
+
+    addEventListener('resize', () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+    });
+
+    // ---------- initial state ----------
+    buildLot(2);
+    sizeButtons[0].classList.add('active');
+    trafficButtons.find(b => b.dataset.level === 'busy').classList.add('active');
+    quickDemo();
+    frame();
+</script>
+</body>
+</html>
+
+{% endblock %}
