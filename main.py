@@ -22,6 +22,10 @@ def dashboard():
 def team():
     return render_template('team.html')
 
+@app.route('/full_screen')
+def full_screen():
+    return render_template('full_screen.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
